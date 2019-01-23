@@ -1,0 +1,96 @@
+Sub 月次成績の転記マクロ()
+
+'いくつ変数が必要かわからないため、無数に変数の宣言
+Dim i, j, k, l, m, n, o, p, x, y, z As Integer
+
+'###########################################
+'#転記元のシートを変えるときの注意事項     #
+'#①コピー元のシートの数字を変える。×3か所#
+'#②日付の月を変える。×1か所              #
+'###########################################
+
+'出力シートで転記開始する行番号の取得
+    Sheets("出力用").Activate
+    y = getLastRow(Sheets("出力用"), 2)
+    z = y + 1 '転記の開始行の番号
+
+'繰り返し回数として、転記元シートのA行において人名が入力されているセルの数を取得
+    Sheets("11").Activate '###########################################数字を変える
+    x = WorksheetFunction.CountIf(Range("A1:A600"), "*")
+
+'以下は繰り返し処理に係る部分
+    For i = 1 To x
+
+'行番号の前計算
+    j = i - 1 '調整用
+    k = j * 6 '転記元の行数の計算用
+    l = j * 31 '転記先の行数の計算用
+    m = k + 1 '転記元の氏名の行番号
+    n = k + 6 '転記元の範囲の最終行の番号
+    o = l + z '転記先の氏名の行番号
+    p = l + z + 30 '転記先の氏名オートフィル領域の最終行
+
+'名前のコピー
+    Sheets("11").Activate '###########################################数字を変える
+    Cells(m, 1).Select
+    Selection.Copy
+    Sheets("出力用").Activate
+    Cells(o, 2).Select
+    Selection.PasteSpecial Paste:=xlPasteValues
+    Application.CutCopyMode = False
+'Range("Sheet"出力用"!Cells(m, 1)").Value = Cells(m, 1).Value//挫折している書き方
+
+'名前のオートフィル
+    Sheets("出力用").Activate
+    Range(Cells(o, 2), Cells(p, 2)).Select
+    Application.CutCopyMode = False
+    Selection.FillDown
+    ActiveWindow.SmallScroll Down:=-21
+
+'日付の入力
+    Sheets("出力用").Activate
+    Cells(o, 1).Value = DateSerial(2018, 11, 1) '###########################################数字を変える
+    Cells(o, 1).Select
+    Selection.AutoFill Destination:=Range(Cells(o, 1), Cells(p, 1)), Type:=xlFillDefault
+
+'行列の入れ替えコピー
+    Sheets("11").Activate '###########################################数字を変える
+    Range(Cells(m, 5), Cells(n, 35)).Select
+    Application.CutCopyMode = False
+    Selection.Copy
+    Sheets("出力用").Activate
+    Cells(o, 3).Select
+    Selection.PasteSpecial Paste:=xlPasteValues, Transpose:=True
+    Application.CutCopyMode = False
+'    Selection.PasteSpecial Paste:=xlPasteAll,Transpose:=True, Operation:=xlNone,  SkipBlanks:=False,
+        Next
+
+End Sub
+
+Function getLastRow(WS As Worksheet, Optional CheckCol As Long = 1) As Long
+ With WS
+  getLastRow = 0
+
+  If Not Intersect(.UsedRange, .Columns(CheckCol)) Is Nothing Then
+   Dim LastRow As Long
+   LastRow = .UsedRange.Row + .UsedRange.Rows.Count - 1
+
+   If LastRow > 1 Then
+    Dim buf As Variant
+    buf = .Range(.Cells(1, CheckCol), .Cells(LastRow, CheckCol)).Value
+
+    Dim C As Long
+    For C = UBound(buf, 1) To 1 Step -1
+     If Not IsEmpty(buf(C, 1)) Then
+      getLastRow = C
+      Exit Function
+     End If
+    Next
+
+   ElseIf Not IsEmpty(.Cells(1, CheckCol).Value) Then
+     getLastRow = 1
+   End If
+
+  End If
+ End With
+End Function
